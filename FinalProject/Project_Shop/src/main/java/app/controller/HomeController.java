@@ -400,6 +400,7 @@ public class HomeController {
 		boolean bl = usersDAO.updateUsers(usersUpdate);
 		if (bl) {
 			session.setAttribute("users", usersUpdate);
+			session.setAttribute("userAdminImage",imageFile.getOriginalFilename() );
 			model.addAttribute("users", usersUpdate);
 			return "user/myAccount";
 		} else {

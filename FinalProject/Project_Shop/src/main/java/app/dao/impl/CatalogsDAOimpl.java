@@ -82,4 +82,24 @@ public class CatalogsDAOimpl implements CataLogsDAO{
 		return null;
 	}
 
+	@Override
+	public boolean checkCatalogNameExsit(String catalogName) {
+		Session session = sessionFactory.openSession();
+		try {
+			List list = session
+					.createQuery(
+							"from CataLogs catalogs where catalogs.status = 1 and catalogs.catalogName = :catalogName")
+					.setParameter("catalogName", catalogName).list();
+			if (list.size() > 0) {
+				return true;
+			} else
+				return false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			session.close();
+		}
+		return false;
+	}
+
 }

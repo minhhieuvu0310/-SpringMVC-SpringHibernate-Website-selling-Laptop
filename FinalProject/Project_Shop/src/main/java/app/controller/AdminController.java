@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import javax.validation.Valid;
+import javax.websocket.server.PathParam;
+
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,6 +33,7 @@ import app.dao.CartDAO;
 import app.dao.CataLogsDAO;
 import app.dao.ColorDAO;
 import app.dao.ImageLinkDAO;
+import app.dao.OrderdetailDAO;
 import app.dao.OrdersDAO;
 import app.dao.ProductDAO;
 import app.dao.ProviderDAO;
@@ -41,6 +44,7 @@ import app.entities.Cart;
 import app.entities.CataLogs;
 import app.entities.Color;
 import app.entities.ImageLink;
+import app.entities.Orderdetail;
 import app.entities.Orders;
 import app.entities.Product;
 import app.entities.Provider;
@@ -79,6 +83,9 @@ public class AdminController {
 
 	@Autowired
 	private RoleDAO roleDAO;
+	
+	@Autowired
+	private OrderdetailDAO orderdetailDAO;
 
 	/**
 	 * Xử Lý Đăng Nhập Vào Trang Admin
@@ -104,6 +111,7 @@ public class AdminController {
 			if (reslut2) {
 				session.setAttribute("userNameAdmin", user.getFullName());
 				session.setAttribute("userAdminImage", user.getUserImage());
+				session.setAttribute("userAdminId", user.getUserId());
 				return "redirect:/homeBackend";
 			} else {
 				model.addAttribute("message", "Xin lỗi tài khoản của bạn không được phép truy cập.");
@@ -176,13 +184,18 @@ public class AdminController {
 	 */
 	@RequestMapping(value = "insertCatalog")
 	public String insertCatalog(Model model, @ModelAttribute("newcatalogs") CataLogs newcatalogs) {
-		newcatalogs.setStatus(true);
-		boolean check = cataLogsDAO.insertCatalog(newcatalogs);
-		if (check) {
-			return "redirect:/getAllCatalog";
-		} else {
-			model.addAttribute("message", "Thêm mới không thành công");
+		if (cataLogsDAO.checkCatalogNameExsit(newcatalogs.getCatalogName())) {
+			model.addAttribute("message", "Tên danh mục đã tồn tại");
 			return "admin/insertCatalog";
+		} else {
+			newcatalogs.setStatus(true);
+			boolean check = cataLogsDAO.insertCatalog(newcatalogs);
+			if (check) {
+				return "redirect:/getAllCatalog";
+			} else {
+				model.addAttribute("message", "Thêm mới không thành công");
+				return "admin/insertCatalog";
+			}
 		}
 	}
 
@@ -213,13 +226,23 @@ public class AdminController {
 	 */
 	@RequestMapping(value = "updateCatalog")
 	public String updateCatalog(Model model, @ModelAttribute(name = "catalogs") CataLogs catalogs) {
-		boolean result = false;
-		result = cataLogsDAO.UpdateCatalog(catalogs);
-		if (result) {
-			return "redirect:/getAllCatalog";
-		} else {
-			model.addAttribute("message", "Cập Nhật Danh Mục Không Thành Công.");
+		CataLogs catalogsById = cataLogsDAO.getCatalogsById(catalogs.getCatalogId());
+		if (cataLogsDAO.checkCatalogNameExsit(catalogs.getCatalogName()) && !catalogsById.getCatalogName().equals(catalogs.getCatalogName())) {
+			model.addAttribute("message", "Tên danh mục đã tồn tại");
+			List<CataLogs> allCataLog = cataLogsDAO.getAllCataLog();
+			model.addAttribute("listCatalog", allCataLog);
 			return "admin/updateCatalog";
+		} else{
+			boolean result = false;
+			result = cataLogsDAO.UpdateCatalog(catalogs);
+			if (result) {
+				return "redirect:/getAllCatalog";
+			} else {
+				List<CataLogs> allCataLog = cataLogsDAO.getAllCataLog();
+				model.addAttribute("listCatalog", allCataLog);
+				model.addAttribute("message", "Cập Nhật Danh Mục Không Thành Công.");
+				return "admin/updateCatalog";
+			}
 		}
 	}
 
@@ -280,14 +303,20 @@ public class AdminController {
 	 */
 	@RequestMapping(value = "insertProvider")
 	public String insertProvider(Model model, @ModelAttribute("newprovider") Provider newprovider) {
-		newprovider.setStatus(true);
-		boolean result = providerDAO.insertProvider(newprovider);
-		if (result) {
-			return "redirect:/getAllProvider";
-		} else {
-			model.addAttribute("message", "Thêm mới không thành công");
+		if (providerDAO.checkProviderNameExsit(newprovider.getProviderName())) {
+			model.addAttribute("message", "Tên nhà sản xuất đã tồn tại");
 			return "admin/insertProvider";
+		} else {
+			newprovider.setStatus(true);
+			boolean result = providerDAO.insertProvider(newprovider);
+			if (result) {
+				return "redirect:/getAllProvider";
+			} else {
+				model.addAttribute("message", "Thêm mới không thành công");
+				return "admin/insertProvider";
+			}
 		}
+		
 	}
 
 	/**
@@ -315,14 +344,22 @@ public class AdminController {
 	 */
 	@RequestMapping(value = "updateProvider")
 	public String updateProvider(Model model, @ModelAttribute(name = "provider") Provider provider) {
-		boolean result = false;
-		result = providerDAO.updateProvider(provider);
-		if (result) {
-			return "redirect:/getAllProvider";
-		} else {
-			model.addAttribute("message", "Cập Nhật nhà sản xuất Không Thành Công.");
+		Provider providerById = providerDAO.getProviderById(provider.getProviderId());;
+		if (providerDAO.checkProviderNameExsit(provider.getProviderName()) && !providerById.getProviderName().equals(provider.getProviderName())) {
+			model.addAttribute("message", "Tên nhà sản xuất đã tồn tại");
 			return "admin/updateProvider";
+		} else{
+			boolean result = false;
+			result = providerDAO.updateProvider(provider);
+			if (result) {
+				return "redirect:/getAllProvider";
+			} else {
+				model.addAttribute("message", "Cập Nhật nhà sản xuất Không Thành Công.");
+				return "admin/updateProvider";
+			}
 		}
+		
+		
 	}
 
 	/**
@@ -742,16 +779,22 @@ public class AdminController {
 	@RequestMapping(value = "deleteUser")
 	public String deleteUser(Model model, @RequestParam("Id") Integer id, HttpSession session) {
 		if (session.getAttribute("userNameAdmin") != null) {
+			int Id = (Integer) session.getAttribute("userAdminId");
 			Users user = usersDAO.getUserById(id);
-			user.setStatus(false);
-			boolean check = false;
-			check = usersDAO.updateUsers(user);
-			if (check) {
-				return "redirect:/getAllUser";
-			} else {
-				model.addAttribute("message", "xóa người dùng không thành công.");
-				return "admin/user";
-			}
+			if(user.getUserId() == Id) {
+				model.addAttribute("message", "bạn không thể xóa tài khoản của chính mình.");
+				return "admin/Error";
+			}else {
+				user.setStatus(false);
+				boolean check = false;
+				check = usersDAO.updateUsers(user);
+				if (check) {
+					return "redirect:/getAllUser";
+				} else {
+					model.addAttribute("message", "xóa người dùng không thành công.");
+					return "admin/Error";
+				}
+			}			
 		} else {
 			Users users = new Users();
 			model.addAttribute("users", users);
@@ -924,6 +967,20 @@ public class AdminController {
 			model.addAttribute("message", "Xác thực không thành công.");
 			return "admin/Error";
 		}
+	}
+	
+	@RequestMapping(value = "orderDetail")
+	public String orderDetail (Model model, HttpSession session, @PathParam("Id") Integer Id) {
+		if (session.getAttribute("userNameAdmin") != null) {
+			System.out.println("Id hoa don" + Id);
+			List<Orderdetail> listOrderDetail = orderdetailDAO.findOrderDetailByOrdersId(Id);
+			model.addAttribute("listOrderDetail", listOrderDetail);
+			return "admin/orderDetail";
+		} else {
+			Users users = new Users();
+			model.addAttribute("users", users);
+			return "admin/login";
+		}		
 	}
 	/**
 	 * Hàm xử lý upload file
