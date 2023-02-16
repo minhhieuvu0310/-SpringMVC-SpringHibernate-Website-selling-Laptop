@@ -12,7 +12,7 @@ import app.entities.CataLogs;
 import app.entities.Provider;
 
 @Repository
-public class ProviderDAOimpl implements ProviderDAO{
+public class ProviderDAOimpl implements ProviderDAO {
 	@Autowired
 	private SessionFactory sessionFactory;
 
@@ -20,8 +20,7 @@ public class ProviderDAOimpl implements ProviderDAO{
 	public List<Provider> getAllProvider() {
 		Session session = sessionFactory.openSession();
 		try {
-			List list = session.createQuery("from Provider provider where provider.status = 1")
-					.list();
+			List list = session.createQuery("from Provider provider where provider.status = 1").list();
 			return list;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -43,7 +42,7 @@ public class ProviderDAOimpl implements ProviderDAO{
 			// TODO: handle exception
 			e.printStackTrace();
 			session.getTransaction().rollback();
-		}finally {
+		} finally {
 			session.close();
 		}
 		return false;
@@ -83,4 +82,23 @@ public class ProviderDAOimpl implements ProviderDAO{
 		return null;
 	}
 
+	@Override
+	public boolean checkProviderNameExsit(String providerName) {
+		Session session = sessionFactory.openSession();
+		try {
+			List list = session
+					.createQuery(
+							"from Provider provider where provider.status = 1 and provider.providerName = :providerName")
+					.setParameter("providerName", providerName).list();
+			if (list.size() > 0) {
+				return true;
+			} else
+				return false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			session.close();
+		}
+		return false;
+	}
 }

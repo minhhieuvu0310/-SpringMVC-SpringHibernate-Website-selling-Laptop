@@ -30,4 +30,10 @@ public interface CataLogsDAO {
      */
 	public boolean UpdateCatalog(CataLogs cataLogs);
 	
+	/**
+	 * Kiểm tra xem tên danh mục đã tồn tại chưa
+	 * @param catalogName
+	 * @return
+	 */
+	public boolean checkCatalogNameExsit(String catalogName);
 }

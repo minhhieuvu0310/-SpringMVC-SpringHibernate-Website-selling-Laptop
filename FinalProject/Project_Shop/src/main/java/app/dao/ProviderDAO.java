@@ -28,4 +28,11 @@ public interface ProviderDAO {
      * @return provider
      */
 	public Provider getProviderById(Integer Id);
+	
+	/**
+	 *  kiểm tra xem tên nhà sản xuất đã tồn tại hay chưa
+	 * @param providerName
+	 * @return boolean
+	 */
+	public boolean checkProviderNameExsit(String providerName);
 }
